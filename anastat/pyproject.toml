@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anastat"
+version = "0.0.1-alpha"
+authors = [
+  { name="ChrisDewa", email="chrisdewa@duck.com" },
+]
+description = "Simple library for my repetitive healthcare data analytics"
+readme = "README.md"
+requires-python = ">=3.11"
+
+dependencies = [
+  # TBA
+]
