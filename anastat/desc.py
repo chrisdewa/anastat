@@ -12,8 +12,7 @@ def describe_cuants(df: pd.DataFrame):
 
 def describe_cats(df: pd.DataFrame):
     result = pd.DataFrame()
-    categoricals = df.select_dtypes(include='category')
-    for cat in categoricals.columns:
+    for cat in df.columns:
         freq = df[cat].value_counts()
         perc = df[cat].value_counts(normalize=True)
         var = pd.DataFrame({
