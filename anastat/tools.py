@@ -22,4 +22,6 @@ def clean_corr(df: pd.DataFrame, **kws) -> pd.DataFrame:
         meaning without the first column and last row and without
         duplicates
     """
-    return df.corr(**kws).mask(np.tril(np.ones(corr.shape)).astype(bool)).iloc[:-1, 1:]
+    corr = df.corr(**kws)
+    corr = corr.mask(np.tril(np.ones(corr.shape)).astype(bool)).iloc[:-1, 1:]
+    return corr
