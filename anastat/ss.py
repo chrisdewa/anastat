@@ -9,7 +9,7 @@ from .tools import calc_za, calc_zb
 
 def one_proportion(
     p: float, 
-    alfa: float = 0.05, 
+    alpha: float = 0.05, 
     error: float = 0.1
 ):
     """
@@ -17,7 +17,7 @@ def one_proportion(
     Args:
         p (float):
             the proportion
-        alfa (float):
+        alpha (float):
             the significance level
         error (float):
             the permissible error range (beta)
@@ -25,10 +25,19 @@ def one_proportion(
         int: the minimal sample size
     """
     q = 1-p
-    za = calc_za(alfa)
+    za = calc_za(alpha)
     n = ((za**2)*p*q) / (error**2)
     return math.ceil(n)
-    
+
+def two_proportions(p1: float, p2: float, alpha: float = 0.05, beta: float=0.2, error: float = 0.1):
+    """
+    Sample size for comparing two proportions
+    Asumes normality
+    """
+    Za = calc_za(alpha)
+    Zb = calc_zb(beta)
+    n = ((p1*(1-p1)+p2*(1-p2))/(p1-p2)**2) * (za + zb)**2
+    return math.ceil(n)
 
 def ttest_2sam(
     effect_size: float,
