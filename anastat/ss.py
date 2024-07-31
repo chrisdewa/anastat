@@ -1,79 +1,107 @@
-# formulas for sample size
+from math import ceil, exp
+import typing as tp
 
-import math
+import matplotlib.pyplot as plt
 import scipy.stats as stats
-import statsmodels.api as sm
+import numpy as np
+import math
 
-from .tools import calc_za, calc_zb
+import pingouin as pg 
+
+norm = stats.norm
+
+Tail = tp.Literal['one-sided', 'two-sided']
 
 
-def one_proportion(
-    p: float, 
-    alpha: float = 0.05, 
-    error: float = 0.1
-):
-    """
-    calculates the sample size for one proportion
-    Args:
-        p (float):
-            the proportion
-        alpha (float):
-            the significance level
-        error (float):
-            the permissible error range (beta)
-    Returns:
-        int: the minimal sample size
-    """
+def Z(alpha: float, beta: float|None = None, *, kind: Tail = 'two-sided') -> float:
+    assert kind in {'two-sided', 'one-sided'}, ":kind: can only be 'one-sided' or 'two-sided'"
+    assert 0 < alpha < 1, "alpha has to be between 0 and 1"
+    if beta is not None:
+        assert 0 < beta < 1, "beta has to be between 0 and 1"
+    Z = norm.ppf(1-alpha/ 2 if kind == 'two-sided' else 1)
+    if beta:
+        Z += norm.ppf(1-beta)
+    return Z
+
+
+def aucroc(auc: float, alpha: float=0.05, error: float=0.05) -> int:
+    a = stats.norm.ppf(auc) * 1.414
+    v_auc = (0.0099*exp(-a**2/2)) * (6*a**2+16)
+    z = Z(alpha)
+    n = (z**2*v_auc)/error**2
+    return ceil(n)
+
+
+def one_proportion(p, alpha=0.05, error=0.05, *, kind: Tail = 'two-sided'):
+    z = Z(alpha, kind=kind)
     q = 1-p
-    za = calc_za(alpha)
-    n = ((za**2)*p*q) / (error**2)
-    return math.ceil(n)
-
-def two_proportions(p1: float, p2: float, alpha: float = 0.05, beta: float=0.2, error: float = 0.1):
-    """
-    Sample size for comparing two proportions
-    Asumes normality
-    """
-    Za = calc_za(alpha)
-    Zb = calc_zb(beta)
-    n = ((p1*(1-p1)+p2*(1-p2))/(p1-p2)**2) * (za + zb)**2
-    return math.ceil(n)
-
-def ttest_2sam(
-    effect_size: float,
-    alpha: float = 0.05,
-    beta: float = 0.2,
-    ratio: float = 1,
-):
-    """
-    returns the sample size for a two sample ttest
-    """
-    return math.ceil(
-        sm.stats.tt_ind_solve_power(
-            effect_size=effect_size,
-            alpha=alpha,
-            power=1-beta,
-            ratio=ratio,
-            alternative='two-sided'
-        )
-    )
+    n = (z*p*q)/error**2
+    return ceil(n)
 
 
-def corr(
-    expected_r: float,
-    alpha: float = 0.05,
-    beta: float = 0.2,
-):
-    C = 0.5 * math.log((1+expected_r)/(1-expected_r))
-    za = calc_za(alpha)
-    zb = calc_zb(beta)
-    n = ((za+zb)/C)**2 + 3
-    return math.ceil(n)
+def one_proportion_finite(p, N, alpha=0.05, error=0.05, *, kind: Tail = 'two-sided'):
+    z = Z(alpha, kind=kind)
+    q = 1-p
+    num = N * z**2 * p * q
+    den = error**2 * (N-1) + z**2 * p * q
+    n = num/den
+    return ceil(n)
 
 
+def one_proportion_test(p, alpha=0.05, beta=0.2, error=0.05, *, kind: Tail = 'two-sided'):
+    z = Z(alpha, beta, kind=kind)
+    q = 1-p
+    n = (z**2 * p * q)/error**2
+    return ceil(n)
 
 
+def one_proportion_test_bad(p, alpha=0.05, beta=0.2, error=0.05, *, kind: Tail = 'two-sided'):
+    z = Z(alpha, beta, kind=kind)
+    q = 1-p
+    n = (z*p*q)/error**2 # w/o squared z
+    return ceil(n)
 
 
+def two_proportions(p1, p2, alpha=0.05, beta=0.2, *, kind: Tail = 'two-sided'):
+    z = Z(alpha, beta, kind=kind)
+    num = (p1*(1-p1))+(p2*(1-p2))
+    den = (p1-p2)**2
+    n = num/den * z
+    return ceil(n)
+    
+
+def one_mean(s, error, alpha=0.05, beta=0.2, *, kind: Tail = 'two-sided'):
+    z = Z(alpha, beta, kind=kind)
+    n = (z*s/error)**2
+    return ceil(n)
 
 
+def one_mean_test(s, error, alpha=0.05, *, kind: Tail = 'two-sided'):
+    z = Z(alpha, kind=kind)
+    n = (z*s/error)**2
+    return ceil(n)  
+
+
+def one_mean_test(s, error, alpha=0.05, beta=0.2, *, kind: Tail = 'two-sided'):
+    z = Z(alpha, beta, kind=kind)
+    n = (z*s/error)**2
+    return ceil(n)
+
+
+def correlation(r, alpha=0.05, beta=0.2, *, kind: Tail = 'two-sided'):
+    num = Z(alpha, beta, kind=kind)
+    den = np.log((1+r)/(1-r))/2
+    n = (num/den)**2 + 3
+    return ceil(n)
+
+
+def survival_single_arm(s_alt, s_null, alpha=0.05, beta=0.2, *, kind: Tail = 'two-sided'):
+    """doi: 10.1002/pst.2090"""
+    z = Z(alpha, beta, kind=kind)
+    tau = 0.25**0.5
+    
+    num = tau*Z
+    den = math.asin(s_alt**0.5)-math.asin(s_null**0.5)
+    n = (num/den)**2
+    return ceil(n)
+    
