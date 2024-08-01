@@ -1,7 +1,8 @@
-from math import ceil, exp
 import typing as tp
+from math import ceil, exp
+# from functools import cache
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import scipy.stats as stats
 import numpy as np
 import math
@@ -12,16 +13,20 @@ norm = stats.norm
 
 Tail = tp.Literal['one-sided', 'two-sided']
 
-
+# @cache
 def Z(alpha: float, beta: float|None = None, *, kind: Tail = 'two-sided') -> float:
+
     assert kind in {'two-sided', 'one-sided'}, ":kind: can only be 'one-sided' or 'two-sided'"
     assert 0 < alpha < 1, "alpha has to be between 0 and 1"
+    
     if beta is not None:
         assert 0 < beta < 1, "beta has to be between 0 and 1"
-    Z = norm.ppf(1-alpha/ 2 if kind == 'two-sided' else 1)
-    if beta:
-        Z += norm.ppf(1-beta)
-    return Z
+    
+    za = norm.ppf(1-alpha/ 2 if kind == 'two-sided' else 1)
+
+    zb = norm.ppf(1-beta) if beta is not None else 0
+    
+    return za + zb
 
 
 def aucroc(auc: float, alpha: float=0.05, error: float=0.05) -> int:
@@ -35,7 +40,7 @@ def aucroc(auc: float, alpha: float=0.05, error: float=0.05) -> int:
 def one_proportion(p, alpha=0.05, error=0.05, *, kind: Tail = 'two-sided'):
     z = Z(alpha, kind=kind)
     q = 1-p
-    n = (z*p*q)/error**2
+    n = (z**2 * p * q)/error**2
     return ceil(n)
 
 
