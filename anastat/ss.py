@@ -105,7 +105,7 @@ def survival_single_arm(s_alt, s_null, alpha=0.05, beta=0.2, *, kind: Tail = 'tw
     z = Z(alpha, beta, kind=kind)
     tau = 0.25**0.5
     
-    num = tau*Z
+    num = tau*z
     den = math.asin(s_alt**0.5)-math.asin(s_null**0.5)
     n = (num/den)**2
     return ceil(n)

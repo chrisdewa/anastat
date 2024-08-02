@@ -1,15 +1,11 @@
-from dataclasses import dataclass
 from typing import Literal
 
 import pandas as pd
 
+from .dx import DiagnosticPerformance as Test
+
 Result = Literal['positive', 'negative']
 
-@dataclass
-class Test:
-    name: str
-    sensitivity: float
-    specificity: float
 
 class BayesianDiagnosis:
     def __init__(self, prevalence):

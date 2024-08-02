@@ -125,18 +125,20 @@ def dor(table: NDArray, confidence=0.95) -> DOR:
     cil = math.exp(LOR - za*SE)
     cih = math.exp(LOR + za*SE)
     
-    
     return DOR(or_, cil, cih)
 
+
 class DiagnosticPerformance(NamedTuple):
-    sensitivity: float
-    specificity: float
-    ppv: float
-    npv: float
-    accuracy: float
+    sensitivity: float|None = None
+    specificity: float|None = None
+    ppv: float|None = None
+    npv: float|None = None
+    accuracy: float|None = None
+
+    name: str | None = None
 
     @classmethod
-    def from_table(cls, table: NDArray) -> Self:
+    def from_table(cls, table: NDArray, *, name: str|None = None) -> Self:
         a, b, c, d = unpack_table(table)
         return cls(
             sensitivity=sensitivity(a, c),
@@ -144,9 +146,8 @@ class DiagnosticPerformance(NamedTuple):
             ppv=ppv(a, b),
             npv=npv(d, c),
             accuracy=accuracy(table),
+            name=name,
         )
-
-
 
 
 
